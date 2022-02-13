@@ -225,67 +225,6 @@ public class MainActivity extends AppCompatActivity implements UserListClick {
                 });
 
         requestQueue.add(array);
-
-
-//        //Creating and Instantiating the Client class with BASE URL:
-//        APIs apIs = ApiClient.getClient().create(APIs.class);
-//        //Calling the API:
-//        Call<ResponseBody> call = apIs.getUser();
-//
-//        //Performing the call back:
-//        call.enqueue(new Callback<ResponseBody>() {
-//            @Override
-//            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-//                try {
-//
-//                    //Taking the root data as JSON Array:
-//                    JSONArray array = new JSONArray(response.body().string());
-//                    //checking to know, if the data is not available:
-//                    //Clearing the list if any data already in:
-//                    list.clear();
-//                    if (array.length() > 0) {
-//                        //Making the warning text Disable:
-//                        warningMessage.setVisibility(View.GONE);
-//                        recyclerView.setVisibility(View.VISIBLE);
-//                        //Traversing through all the array element:
-//                        for (int i = 0; i < array.length(); i++) {
-//                            JSONObject single = array.getJSONObject(i);
-//                            //taking particular element:
-//                            String UserName = single.getString("UserName");
-//                            int TabletUser = single.getInt("TabletUser");
-//                            int UserID = single.getInt("UserID");
-//                            int PinCode = single.getInt("PinCode");
-//                            String strQRCode = single.getString("strQRCode");
-//                            int GroupId = single.getInt("GroupId");
-//
-//                            UserModel model = new UserModel(UserName, TabletUser, UserID, PinCode, strQRCode, GroupId);
-//                            list.add(model);
-//                        }
-//
-//                        UserAdapter adapter = new UserAdapter(MainActivity.this, list, MainActivity.this);
-//                        recyclerView.setAdapter(adapter);
-//                        adapter.notifyDataSetChanged();
-//
-//                    } else {
-//                        //If any error happen make it visible and show a warning message:
-//                        warningMessage.setVisibility(View.VISIBLE);
-//                        warningMessage.setText("No data found!");
-//                    }
-//
-//                } catch (Exception e) {
-//                    //If any error happen make it visible and show a warning message:
-//                    warningMessage.setVisibility(View.VISIBLE);
-//                    warningMessage.setText("Error: " + e.getMessage());
-//                }
-//            }
-//
-//            @Override
-//            public void onFailure(Call<ResponseBody> call, Throwable e) {
-//                //If any error happen make it visible and show a warning message:
-//                warningMessage.setVisibility(View.VISIBLE);
-//                warningMessage.setText("Error: " + e.getMessage());
-//            }
-//        });
     }
 
     private void parseJson(JSONArray array) {
@@ -337,7 +276,7 @@ public class MainActivity extends AppCompatActivity implements UserListClick {
     }
 
     @Override
-    public void clickOnUser(String name, int pinCode) {
+    public void clickOnUser(String name, int pinCode, int userId) {
         behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
         userMessage.setText(String.format("Enter pin for %s", name));
 
@@ -348,6 +287,7 @@ public class MainActivity extends AppCompatActivity implements UserListClick {
                 if (pin == pinCode) {
                     Intent intent = new Intent(MainActivity.this, Home.class);
                     intent.putExtra("name", name);
+                    intent.putExtra("id", userId);
                     startActivity(intent);
                 } else {
                     passwordField.setError("Wrong Credential");

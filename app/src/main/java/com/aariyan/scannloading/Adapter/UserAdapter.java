@@ -43,7 +43,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                userListClick.clickOnUser(model.getUserName(), model.getPinCode());
+                userListClick.clickOnUser(model.getUserName(), model.getPinCode(), model.getUserID());
             }
         });
     }

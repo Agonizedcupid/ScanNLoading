@@ -64,4 +64,5 @@ public class UserModel {
     public void setGroupId(int groupId) {
         GroupId = groupId;
     }
+
 }
