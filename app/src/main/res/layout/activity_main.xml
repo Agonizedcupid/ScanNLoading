@@ -142,7 +142,7 @@
             android:layout_height="50dp"
             android:background="@drawable/edit_text_background"
             android:layout_marginTop="15dp"
-            android:hint="Enter the Ip"
+            android:hint="Ip, e.g: http://102.37.0.48/Loadscan/"
             android:paddingStart="15dp"
             android:textSize="16sp"
             android:textColor="@color/black"

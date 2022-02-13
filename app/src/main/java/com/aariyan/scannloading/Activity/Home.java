@@ -2,6 +2,7 @@ package com.aariyan.scannloading.Activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -82,6 +83,10 @@ public class Home extends AppCompatActivity {
     private static int selectedRoute, selectedOrder;
 
     private List<HeaderLinesModel> headerLinesList = new ArrayList<>();
+
+    private ProgressBar progressBar;
+
+    private ConstraintLayout loadingLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -230,7 +235,10 @@ public class Home extends AppCompatActivity {
     private void initUI() {
 
         topProgressbar = findViewById(R.id.topProgressbar);
+        progressBar = findViewById(R.id.pBar);
         warningMessage = findViewById(R.id.warningMessage);
+
+        loadingLayout = findViewById(R.id.loadingLayout);
 
         recyclerView = findViewById(R.id.rView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -244,6 +252,10 @@ public class Home extends AppCompatActivity {
         getLoadingBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (date.equals("")) {
+                    Toast.makeText(Home.this, "Please select date!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 callAPIs();
             }
         });
@@ -262,14 +274,14 @@ public class Home extends AppCompatActivity {
         loadingBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                loadingLayout.setVisibility(View.VISIBLE);
             }
         });
 
         queueBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                loadingLayout.setVisibility(View.GONE);
             }
         });
 
@@ -277,45 +289,57 @@ public class Home extends AppCompatActivity {
 
     private void callAPIs() {
 
-        APIs apIs = ApiClient.getClient().create(APIs.class);
-        Call<ResponseBody> call = apIs.getOrderLines(selectedRoute, selectedOrder, date, userId);
-        call.enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                try {
-                    JSONObject finalResponse = new JSONObject(response.body().string());
-                    JSONArray Headers = finalResponse.getJSONArray("Headers");
+        progressBar.setVisibility(View.VISIBLE);
+        SharedPreferences sharedPreferences = new SharedPreferences(Home.this);
 
-                    Toast.makeText(Home.this, ""+response.body().string(), Toast.LENGTH_SHORT).show();
-                    Log.d("TEST_RESULT", response.body().string());
-                    headerLinesList.clear();
-                    if (Headers.length() > 0) {
-                        for (int i = 0; i < Headers.length(); i++) {
-                            JSONObject single = Headers.getJSONObject(i);
-                            String storeName = single.getString("StoreName");
-                            int OrderId = single.getInt("OrderId");
-                            HeaderLinesModel model = new HeaderLinesModel(storeName, OrderId);
-                            headerLinesList.add(model);
-                        }
+        String appendedUrl = sharedPreferences.getURL(Constant.IP_MODE_KEY, Constant.IP_URL) +
+                "OrdersAndOrderLines.php?routename=" + selectedRoute + "&ordertype=" + selectedOrder + "&deliverydate=" + date + "&userId=" + userId;
 
-                        HeaderLinesAdapter adapter = new HeaderLinesAdapter(Home.this, headerLinesList);
-                        recyclerView.setAdapter(adapter);
-                        adapter.notifyDataSetChanged();
+        JsonObjectRequest array = new JsonObjectRequest(Request.Method.GET, appendedUrl, null,
+                this::parseOrdernOrderJson,
+                e -> {
+                    warningMessage.setVisibility(View.VISIBLE);
+                    warningMessage.setText("Error: " + e.getMessage());
+                    progressBar.setVisibility(View.GONE);
+                });
 
-                    }
+        requestQueue.add(array);
+    }
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Toast.makeText(Home.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+    private void parseOrdernOrderJson(JSONObject finalResponse) {
+
+        try {
+
+            JSONArray Headers = finalResponse.getJSONArray("Headers");
+
+            headerLinesList.clear();
+            if (Headers.length() > 0) {
+                warningMessage.setVisibility(View.GONE);
+                for (int i = 0; i < Headers.length(); i++) {
+                    JSONObject single = Headers.getJSONObject(i);
+                    String storeName = single.getString("StoreName");
+                    int OrderId = single.getInt("OrderId");
+                    HeaderLinesModel model = new HeaderLinesModel(storeName, OrderId);
+                    headerLinesList.add(model);
                 }
+
+                HeaderLinesAdapter adapter = new HeaderLinesAdapter(Home.this, headerLinesList);
+                recyclerView.setAdapter(adapter);
+                adapter.notifyDataSetChanged();
+
+                progressBar.setVisibility(View.GONE);
+
+            } else {
+                progressBar.setVisibility(View.GONE);
+                warningMessage.setVisibility(View.VISIBLE);
+                warningMessage.setText("No data found!");
             }
 
-            @Override
-            public void onFailure(Call<ResponseBody> call, Throwable e) {
-                Toast.makeText(Home.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
-
-            }
-        });
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(Home.this, "" + e.getMessage(), Toast.LENGTH_SHORT).show();
+            progressBar.setVisibility(View.GONE);
+        }
     }
 
     private void showDate() {

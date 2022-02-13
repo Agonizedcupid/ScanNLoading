@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements UserListClick {
     private Button logInBtn;
 
     private View bottomSheet, ipBottomSheet;
-    BottomSheetBehavior behavior,ipBehavior;
+    BottomSheetBehavior behavior, ipBehavior;
 
     private FloatingActionButton closeApp;
 
@@ -145,14 +145,20 @@ public class MainActivity extends AppCompatActivity implements UserListClick {
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ipBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                SharedPreferences sharedPreferences = new SharedPreferences(MainActivity.this);
-                sharedPreferences.saveURL(Constant.IP_MODE_KEY, ipField.getText().toString());
 
-                Toast.makeText(MainActivity.this, "Saved", Toast.LENGTH_SHORT).show();
+                if (ipField.getText().toString().endsWith("/")) {
+                    ipBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    SharedPreferences sharedPreferences = new SharedPreferences(MainActivity.this);
+                    sharedPreferences.saveURL(Constant.IP_MODE_KEY, ipField.getText().toString());
+
+                    Toast.makeText(MainActivity.this, "Saved", Toast.LENGTH_SHORT).show();
 
 
-                loadData();
+                    loadData();
+                } else {
+                    Toast.makeText(MainActivity.this, "Ip should end with a / (Forward slash)", Toast.LENGTH_SHORT).show();
+                }
+
             }
         });
 
@@ -187,6 +193,11 @@ public class MainActivity extends AppCompatActivity implements UserListClick {
 
                 //saving the value on shared preference:
                 ipBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+
+                SharedPreferences sharedPreferences = new SharedPreferences(MainActivity.this);
+                String appendedUrl = sharedPreferences.getURL(Constant.IP_MODE_KEY, Constant.IP_URL);
+
+                ipField.setText(appendedUrl, TextView.BufferType.EDITABLE);
             }
         });
 
@@ -214,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements UserListClick {
 
         SharedPreferences sharedPreferences = new SharedPreferences(MainActivity.this);
 
-        String appendedUrl = sharedPreferences.getURL(Constant.IP_MODE_KEY, Constant.IP_URL) +"users.php";
+        String appendedUrl = sharedPreferences.getURL(Constant.IP_MODE_KEY, Constant.IP_URL) + "users.php";
 
         JsonArrayRequest array = new JsonArrayRequest(appendedUrl,
                 this::parseJson,
