@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -16,7 +17,9 @@ import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.aariyan.scannloading.Adapter.HeaderLinesAdapter;
 import com.aariyan.scannloading.Adapter.UserAdapter;
 import com.aariyan.scannloading.Constant.Constant;
 import com.aariyan.scannloading.Database.SharedPreferences;
@@ -25,10 +28,11 @@ import com.aariyan.scannloading.Model.HeaderLinesModel;
 import com.aariyan.scannloading.Model.OrderModel;
 import com.aariyan.scannloading.Model.RouteModel;
 import com.aariyan.scannloading.Model.UserModel;
+import com.aariyan.scannloading.Network.APIs;
+import com.aariyan.scannloading.Network.ApiClient;
 import com.aariyan.scannloading.R;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -36,11 +40,18 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.JsonArray;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class Home extends AppCompatActivity {
 
@@ -69,6 +80,8 @@ public class Home extends AppCompatActivity {
     String date = "";
 
     private static int selectedRoute, selectedOrder;
+
+    private List<HeaderLinesModel> headerLinesList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -228,6 +241,13 @@ public class Home extends AppCompatActivity {
         orderSpinner = findViewById(R.id.orderIdSpinner);
         getLoadingBtn = findViewById(R.id.getLoadingBtn);
 
+        getLoadingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                callAPIs();
+            }
+        });
+
 
         loadingBtn = findViewById(R.id.loadingRadioBtn);
         queueBtn = findViewById(R.id.queueRadioBtn);
@@ -253,6 +273,49 @@ public class Home extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void callAPIs() {
+
+        APIs apIs = ApiClient.getClient().create(APIs.class);
+        Call<ResponseBody> call = apIs.getOrderLines(selectedRoute, selectedOrder, date, userId);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                try {
+                    JSONObject finalResponse = new JSONObject(response.body().string());
+                    JSONArray Headers = finalResponse.getJSONArray("Headers");
+
+                    Toast.makeText(Home.this, ""+response.body().string(), Toast.LENGTH_SHORT).show();
+                    Log.d("TEST_RESULT", response.body().string());
+                    headerLinesList.clear();
+                    if (Headers.length() > 0) {
+                        for (int i = 0; i < Headers.length(); i++) {
+                            JSONObject single = Headers.getJSONObject(i);
+                            String storeName = single.getString("StoreName");
+                            int OrderId = single.getInt("OrderId");
+                            HeaderLinesModel model = new HeaderLinesModel(storeName, OrderId);
+                            headerLinesList.add(model);
+                        }
+
+                        HeaderLinesAdapter adapter = new HeaderLinesAdapter(Home.this, headerLinesList);
+                        recyclerView.setAdapter(adapter);
+                        adapter.notifyDataSetChanged();
+
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(Home.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable e) {
+                Toast.makeText(Home.this, ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+
+            }
+        });
     }
 
     private void showDate() {
