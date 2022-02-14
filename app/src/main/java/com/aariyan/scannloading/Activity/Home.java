@@ -194,6 +194,7 @@ public class Home extends AppCompatActivity {
     }
 
     private void routeSpinnerFunc(List<RouteModel> routeList) {
+
         //Spinner items
         ArrayAdapter<RouteModel> dataAdapter = new ArrayAdapter<RouteModel>(Home.this,
                 android.R.layout.simple_spinner_item, routeList);
@@ -202,7 +203,8 @@ public class Home extends AppCompatActivity {
         routeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
-                selectedRoute = Integer.parseInt(adapterView.getItemAtPosition(position).toString());
+                //selectedRoute = Integer.parseInt(adapterView.getItemAtPosition(position).toString());
+                selectedRoute = routeList.get(position).getRouteid();
             }
 
             @Override
@@ -221,7 +223,8 @@ public class Home extends AppCompatActivity {
         orderSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
-                selectedOrder = Integer.parseInt(adapterView.getItemAtPosition(position).toString());
+                //selectedOrder = Integer.parseInt(adapterView.getItemAtPosition(position).toString());
+                selectedOrder = orderList.get(position).getOrderTypeId();
             }
 
             @Override

@@ -29,6 +29,6 @@ public class OrderModel {
 
     @Override
     public String toString() {
-        return ""+getOrderTypeId();
+        return ""+getOrderType();
     }
 }
