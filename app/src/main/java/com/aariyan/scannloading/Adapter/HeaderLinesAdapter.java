@@ -35,6 +35,10 @@ public class HeaderLinesAdapter extends RecyclerView.Adapter<HeaderLinesAdapter.
         HeaderLinesModel model = list.get(position);
         holder.storeName.setText(model.getStoreName());
         holder.orderId.setText(String.format(" # %s", model.getOrderId()));
+
+        holder.delAddress.setText(model.getDeladdress());
+        holder.messageInv.setText(model.getMESSAGESINV());
+        holder.orderNo.setText(model.getOrderNo());
     }
 
     @Override
@@ -44,13 +48,16 @@ public class HeaderLinesAdapter extends RecyclerView.Adapter<HeaderLinesAdapter.
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView storeName, orderId;
+        private TextView storeName, orderId, orderNo,messageInv,delAddress;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
             storeName = itemView.findViewById(R.id.storeName);
             orderId = itemView.findViewById(R.id.orderId);
+            orderNo = itemView.findViewById(R.id.orderNo);
+            messageInv = itemView.findViewById(R.id.messageINV);
+            delAddress = itemView.findViewById(R.id.deladdress);
         }
     }
 }

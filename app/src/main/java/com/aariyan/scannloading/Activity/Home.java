@@ -321,8 +321,16 @@ public class Home extends AppCompatActivity {
                 for (int i = 0; i < Headers.length(); i++) {
                     JSONObject single = Headers.getJSONObject(i);
                     String storeName = single.getString("StoreName");
+                    String orderNo = single.getString("OrderNo");
+                    String MESSAGESINV = single.getString("MESSAGESINV");
+                    String deladdress = single.getString("deladdress");
                     int OrderId = single.getInt("OrderId");
-                    HeaderLinesModel model = new HeaderLinesModel(storeName, OrderId);
+                    HeaderLinesModel model = new HeaderLinesModel(
+                            storeName,
+                            orderNo,
+                            MESSAGESINV,
+                            deladdress,
+                            OrderId);
                     headerLinesList.add(model);
                 }
 
