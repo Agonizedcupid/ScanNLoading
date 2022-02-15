@@ -9,7 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.aariyan.scannloading.Model.HeaderLinesModel;
+import com.aariyan.scannloading.Model.HeadersModel;
 import com.aariyan.scannloading.R;
 
 import java.util.List;
@@ -17,9 +17,9 @@ import java.util.List;
 public class HeaderLinesAdapter extends RecyclerView.Adapter<HeaderLinesAdapter.ViewHolder> {
 
     private Context context;
-    private List<HeaderLinesModel> list;
+    private List<HeadersModel> list;
 
-    public HeaderLinesAdapter(Context context, List<HeaderLinesModel> list) {
+    public HeaderLinesAdapter(Context context, List<HeadersModel> list) {
         this.context = context;
         this.list = list;
     }
@@ -32,7 +32,7 @@ public class HeaderLinesAdapter extends RecyclerView.Adapter<HeaderLinesAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        HeaderLinesModel model = list.get(position);
+        HeadersModel model = list.get(position);
         holder.storeName.setText(model.getStoreName());
         holder.orderId.setText(String.format(" # %s", model.getOrderId()));
 

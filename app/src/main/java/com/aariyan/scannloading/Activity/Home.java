@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -21,42 +20,30 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.aariyan.scannloading.Adapter.HeaderLinesAdapter;
-import com.aariyan.scannloading.Adapter.UserAdapter;
 import com.aariyan.scannloading.Constant.Constant;
+import com.aariyan.scannloading.Database.DatabaseAdapter;
 import com.aariyan.scannloading.Database.SharedPreferences;
-import com.aariyan.scannloading.MainActivity;
-import com.aariyan.scannloading.Model.HeaderLinesModel;
+import com.aariyan.scannloading.Model.HeadersModel;
+import com.aariyan.scannloading.Model.LinesModel;
 import com.aariyan.scannloading.Model.OrderModel;
 import com.aariyan.scannloading.Model.RouteModel;
-import com.aariyan.scannloading.Model.UserModel;
-import com.aariyan.scannloading.Network.APIs;
-import com.aariyan.scannloading.Network.ApiClient;
 import com.aariyan.scannloading.R;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.gson.JsonArray;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
 public class Home extends AppCompatActivity {
 
-    private String userName = "";
+    private static String userName = "";
     private int userId = 1;
 
     private RecyclerView recyclerView;
@@ -82,16 +69,26 @@ public class Home extends AppCompatActivity {
 
     private static int selectedRoute, selectedOrder;
 
-    private List<HeaderLinesModel> headerLinesList = new ArrayList<>();
+    private List<HeadersModel> headerLinesList = new ArrayList<>();
+    private List<LinesModel> linesList = new ArrayList<>();
 
     private ProgressBar progressBar;
 
     private ConstraintLayout loadingLayout;
 
+    DatabaseAdapter databaseAdapter;
+
+    HeaderLinesAdapter adapter;
+
+    private ConstraintLayout snackBarLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
+        //Instantiating the database:
+        databaseAdapter = new DatabaseAdapter(Home.this);
 
         calendar = Calendar.getInstance();
         day = calendar.get(Calendar.DAY_OF_MONTH);
@@ -237,6 +234,8 @@ public class Home extends AppCompatActivity {
 
     private void initUI() {
 
+        snackBarLayout = findViewById(R.id.homeConstraintLayout);
+
         topProgressbar = findViewById(R.id.topProgressbar);
         progressBar = findViewById(R.id.pBar);
         warningMessage = findViewById(R.id.warningMessage);
@@ -255,11 +254,25 @@ public class Home extends AppCompatActivity {
         getLoadingBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                headerLinesList.clear();
+                headerLinesList = databaseAdapter.getHeaderByDateRouteNameOrderTypes(userName, date, selectedRoute, selectedOrder, userId);
+
                 if (date.equals("")) {
                     Toast.makeText(Home.this, "Please select date!", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                callAPIs();
+
+                if (headerLinesList.size() > 0) {
+                    recyclerView.setVisibility(View.VISIBLE);
+                    warningMessage.setVisibility(View.GONE);
+                    adapter = new HeaderLinesAdapter(Home.this, headerLinesList);
+                    recyclerView.setAdapter(adapter);
+                    adapter.notifyDataSetChanged();
+                    Snackbar.make(snackBarLayout, "Data is showing from local storage.", Snackbar.LENGTH_LONG).show();
+                } else {
+                    callAPIs();
+                    Snackbar.make(snackBarLayout, "Data is showing from API.", Snackbar.LENGTH_LONG).show();
+                }
             }
         });
 
@@ -301,6 +314,7 @@ public class Home extends AppCompatActivity {
         JsonObjectRequest array = new JsonObjectRequest(Request.Method.GET, appendedUrl, null,
                 this::parseOrdernOrderJson,
                 e -> {
+                    recyclerView.setVisibility(View.GONE);
                     warningMessage.setVisibility(View.VISIBLE);
                     warningMessage.setText("Error: " + e.getMessage());
                     progressBar.setVisibility(View.GONE);
@@ -314,27 +328,74 @@ public class Home extends AppCompatActivity {
         try {
 
             JSONArray Headers = finalResponse.getJSONArray("Headers");
+            JSONArray Lines = finalResponse.getJSONArray("Lines");
 
             headerLinesList.clear();
             if (Headers.length() > 0) {
                 warningMessage.setVisibility(View.GONE);
                 for (int i = 0; i < Headers.length(); i++) {
                     JSONObject single = Headers.getJSONObject(i);
-                    String storeName = single.getString("StoreName");
-                    String orderNo = single.getString("OrderNo");
+
+                    String StoreName = single.getString("StoreName");
+                    String Route = single.getString("Route");
+                    int DeliverySequence = single.getInt("DeliverySequence");
+                    int Invoiced = single.getInt("Invoiced");
+                    String InvoiceNo = single.getString("InvoiceNo");
+                    String OrderNo = single.getString("OrderNo");
+                    String CustomerPastelCode = single.getString("CustomerPastelCode");
+                    int CustomerId = single.getInt("CustomerId");
                     String MESSAGESINV = single.getString("MESSAGESINV");
-                    String deladdress = single.getString("deladdress");
+                    String UserName = single.getString("UserName");
                     int OrderId = single.getInt("OrderId");
-                    HeaderLinesModel model = new HeaderLinesModel(
-                            storeName,
-                            orderNo,
+                    String strLoadedBy = single.getString("strLoadedBy");
+                    int Loaded = single.getInt("Loaded");
+                    int blnPicked = single.getInt("blnPicked");
+                    int blnPriority = single.getInt("blnPriority");
+                    String deladdress = single.getString("deladdress");
+                    int Value = single.getInt("Value");
+                    String OrderDate = single.getString("OrderDate");
+                    String condition = single.getString("condition");
+                    String strCrateName = single.getString("strCrateName");
+
+
+                    HeadersModel model = new HeadersModel(StoreName,
+                            Route,
+                            DeliverySequence,
+                            Invoiced,
+                            InvoiceNo,
+                            OrderNo,
+                            CustomerPastelCode,
+                            CustomerId,
                             MESSAGESINV,
+                            UserName,
+                            OrderId,
+                            strLoadedBy,
+                            Loaded,
+                            blnPicked,
+                            blnPriority,
                             deladdress,
-                            OrderId);
+                            Value,
+                            OrderDate,
+                            condition,
+                            strCrateName);
                     headerLinesList.add(model);
+
+                    //if data is not empty
+                    if (Headers.length() > 0 && Lines.length() > 0) {
+                        // Insert into SQLite:
+                        long id = databaseAdapter.insertHeader(StoreName, Route, DeliverySequence, Invoiced, InvoiceNo, OrderNo, CustomerPastelCode, CustomerId,
+                                MESSAGESINV, UserName, OrderId, strLoadedBy, Loaded, blnPicked, blnPriority, deladdress, Value, OrderDate, condition, strCrateName,
+                                date, selectedRoute, selectedOrder, userId);
+
+                        if (id > 0) {
+                            Snackbar.make(snackBarLayout, "Data also saved on local database", Snackbar.LENGTH_SHORT).show();
+                        }
+                    }
                 }
 
-                HeaderLinesAdapter adapter = new HeaderLinesAdapter(Home.this, headerLinesList);
+                recyclerView.setVisibility(View.VISIBLE);
+
+                adapter = new HeaderLinesAdapter(Home.this, headerLinesList);
                 recyclerView.setAdapter(adapter);
                 adapter.notifyDataSetChanged();
 
@@ -344,12 +405,74 @@ public class Home extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 warningMessage.setVisibility(View.VISIBLE);
                 warningMessage.setText("No data found!");
+                recyclerView.setVisibility(View.GONE);
+
             }
+
+
+            //JSONArray Lines = finalResponse.getJSONArray("Lines");
+            linesList.clear();
+            if (Lines.length() > 0) {
+
+                for (int i = 0; i < Lines.length(); i++) {
+                    JSONObject single = Lines.getJSONObject(i);
+                    int blnPicked = single.getInt("blnPicked");
+                    int Loaded = single.getInt("Loaded");
+                    String PastelCode = single.getString("PastelCode");
+                    String PastelDescription = single.getString("PastelDescription");
+                    int ProductId = single.getInt("ProductId");
+                    int Qty = single.getInt("Qty");
+                    int QtyOrdered = single.getInt("QtyOrdered");
+                    double Price = single.getDouble("Price");
+                    String Comment = single.getString("Comment");
+                    String UnitSize = single.getString("UnitSize");
+                    String strBulkUnit = single.getString("strBulkUnit");
+                    int UnitWeight = single.getInt("UnitWeight");
+                    int OrderId = single.getInt("OrderId");
+                    int OrderDetailId = single.getInt("OrderDetailId");
+                    String BarCode = single.getString("BarCode");
+                    String ScannedQty = single.getString("ScannedQty");
+                    int isRandom = single.getInt("isRandom");
+                    String PickingTeam = single.getString("PickingTeam");
+
+                    LinesModel linesModel = new LinesModel(
+                            blnPicked, Loaded, PastelCode, PastelDescription, ProductId, Qty, QtyOrdered,
+                            Price, Comment, UnitSize, strBulkUnit, UnitWeight, OrderId, OrderDetailId, BarCode,
+                            ScannedQty, isRandom, PickingTeam
+                    );
+
+                    linesList.add(linesModel);
+
+                    //if data is not empty
+                    if (Headers.length() > 0 && Lines.length() > 0) {
+                        // Insert into SQLite:
+                        long id = databaseAdapter.insertLines(blnPicked, Loaded, PastelCode, PastelDescription, ProductId, Qty, QtyOrdered, Price, Comment,
+                                UnitSize, strBulkUnit, UnitWeight, OrderId, OrderDetailId, BarCode, ScannedQty, isRandom, PickingTeam,
+                                date, selectedRoute, selectedOrder, userId);
+
+                        if (id > 0) {
+                            Snackbar.make(snackBarLayout, "Data also saved on local database", Snackbar.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+
+            } else {
+                progressBar.setVisibility(View.GONE);
+                warningMessage.setVisibility(View.VISIBLE);
+                warningMessage.setText("No data found!");
+                recyclerView.setVisibility(View.GONE);
+
+            }
+
 
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(Home.this, "" + e.getMessage(), Toast.LENGTH_SHORT).show();
             progressBar.setVisibility(View.GONE);
+            warningMessage.setVisibility(View.VISIBLE);
+            warningMessage.setText("" + e.getMessage());
+            recyclerView.setVisibility(View.GONE);
+
         }
     }
 
