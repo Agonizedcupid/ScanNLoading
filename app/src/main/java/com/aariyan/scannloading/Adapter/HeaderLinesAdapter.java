@@ -1,14 +1,17 @@
 package com.aariyan.scannloading.Adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.aariyan.scannloading.Activity.HeaderNLineActivity;
 import com.aariyan.scannloading.Model.HeadersModel;
 import com.aariyan.scannloading.R;
 
@@ -39,6 +42,24 @@ public class HeaderLinesAdapter extends RecyclerView.Adapter<HeaderLinesAdapter.
         holder.delAddress.setText(model.getDeladdress());
         holder.messageInv.setText(model.getMESSAGESINV());
         holder.orderNo.setText(model.getOrderNo());
+
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+
+                Intent intent = new Intent(context, HeaderNLineActivity.class);
+                intent.putExtra("orderId", model.getOrderId());
+                intent.putExtra("storeName", model.getStoreName());
+                intent.putExtra("orderNumber", model.getOrderNo());
+                intent.putExtra("createdBy", "");
+                intent.putExtra("orderDate", model.getOrderDate());
+                intent.putExtra("invoiceNo", model.getInvoiceNo());
+                intent.putExtra("address", model.getDeladdress());
+                intent.putExtra("value", model.getValue());
+                context.startActivity(intent);
+                return true;
+            }
+        });
     }
 
     @Override

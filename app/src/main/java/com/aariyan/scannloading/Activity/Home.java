@@ -43,7 +43,7 @@ import java.util.List;
 
 public class Home extends AppCompatActivity {
 
-    private static String userName = "";
+    public static String userName = "";
     private int userId = 1;
 
     private RecyclerView recyclerView;
