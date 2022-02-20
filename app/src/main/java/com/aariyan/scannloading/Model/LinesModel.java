@@ -10,8 +10,42 @@ public class LinesModel {
     private String BarCode,ScannedQty;
     private int isRandom;
     private String PickingTeam;
+    private int flag;
 
     public LinesModel(){}
+
+    //Flag Constructor:
+
+
+    public LinesModel(int blnPicked, int loaded, String pastelCode, String pastelDescription, int productId, int qty, int qtyOrdered, double price, String comment, String unitSize, String strBulkUnit, int unitWeight, int orderId, int orderDetailId, String barCode, String scannedQty, int isRandom, String pickingTeam, int flag) {
+        this.blnPicked = blnPicked;
+        Loaded = loaded;
+        PastelCode = pastelCode;
+        PastelDescription = pastelDescription;
+        ProductId = productId;
+        Qty = qty;
+        QtyOrdered = qtyOrdered;
+        Price = price;
+        Comment = comment;
+        UnitSize = unitSize;
+        this.strBulkUnit = strBulkUnit;
+        UnitWeight = unitWeight;
+        OrderId = orderId;
+        OrderDetailId = orderDetailId;
+        BarCode = barCode;
+        ScannedQty = scannedQty;
+        this.isRandom = isRandom;
+        PickingTeam = pickingTeam;
+        this.flag = flag;
+    }
+
+    public int getFlag() {
+        return flag;
+    }
+
+    public void setFlag(int flag) {
+        this.flag = flag;
+    }
 
     public LinesModel(int blnPicked, int loaded, String pastelCode, String pastelDescription, int productId, int qty, int qtyOrdered, double price, String comment, String unitSize, String strBulkUnit, int unitWeight, int orderId, int orderDetailId, String barCode, String scannedQty, int isRandom, String pickingTeam) {
         this.blnPicked = blnPicked;

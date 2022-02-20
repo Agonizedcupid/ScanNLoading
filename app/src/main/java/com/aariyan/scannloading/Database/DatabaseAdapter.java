@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 
 import com.aariyan.scannloading.Model.HeadersModel;
 import com.aariyan.scannloading.Model.LinesModel;
+import com.aariyan.scannloading.Model.QueueModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ public class DatabaseAdapter {
     DatabaseHelper helper;
     private List<HeadersModel> headerList = new ArrayList<>();
     private List<LinesModel> linesList = new ArrayList<>();
+    private List<QueueModel> queueList = new ArrayList<>();
 
     public DatabaseAdapter(Context context) {
         helper = new DatabaseHelper(context);
@@ -104,6 +106,18 @@ public class DatabaseAdapter {
         return id;
     }
 
+    //Insert Lines:
+    public long insertQueue(String type, String instructions) {
+        SQLiteDatabase database = helper.getWritableDatabase();
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DatabaseHelper.Type, type);
+        contentValues.put(DatabaseHelper.Instructions, instructions);
+
+        long id = database.insert(DatabaseHelper.QUEUE_TABLE_NAME, null, contentValues);
+        return id;
+    }
+
 
     //get HEADER by User Name , date, route Name, order types, user id
     public List<HeadersModel> getHeaderByDateRouteNameOrderTypes(String userName, String date, int routeName, int orderTypes, int userId) {
@@ -177,7 +191,7 @@ public class DatabaseAdapter {
                 DatabaseHelper.PastelDescription, DatabaseHelper.ProductId, DatabaseHelper.Qty, DatabaseHelper.QtyOrdered,
                 DatabaseHelper.Price, DatabaseHelper.Comment, DatabaseHelper.UnitSize, DatabaseHelper.strBulkUnit
                 , DatabaseHelper.UnitWeight, DatabaseHelper.OrderIds, DatabaseHelper.OrderDetailId, DatabaseHelper.BarCode, DatabaseHelper.ScannedQty
-                , DatabaseHelper.isRandom, DatabaseHelper.PickingTeam};
+                , DatabaseHelper.isRandom, DatabaseHelper.PickingTeam,DatabaseHelper.FLAG};
 
         Cursor cursor = database.query(DatabaseHelper.LINES_TABLE_NAME, columns, selection, args, null, null, null);
         while (cursor.moveToNext()) {
@@ -199,7 +213,8 @@ public class DatabaseAdapter {
                     cursor.getString(15),
                     cursor.getString(16),
                     cursor.getInt(17),
-                    cursor.getString(18)
+                    cursor.getString(18),
+                    cursor.getInt(19)
             );
             linesList.add(model);
         }
@@ -210,8 +225,8 @@ public class DatabaseAdapter {
     //Update Quantity of lines table, as well as changing the flag value using orderId & orderDetailsId:
     public long updateLinesQuantity(int orderId, int orderDetailsId, int userId, int quantity, int flag) {
         SQLiteDatabase database = helper.getWritableDatabase();
-        String selection = DatabaseHelper.OrderIds + " LIKE ? AND " + DatabaseHelper.OrderDetailId + " LIKE ? AND " + DatabaseHelper.UID + " LIKE ?";
-        String[] args = {"" + orderId, "" + orderDetailsId, "" + userId};
+        String selection = DatabaseHelper.OrderIds + " LIKE ? AND " + DatabaseHelper.OrderDetailId + " LIKE ? ";
+        String[] args = {"" + orderId, "" + orderDetailsId};
 
         ContentValues contentValues = new ContentValues();
         contentValues.put(DatabaseHelper.Qty, quantity);
@@ -342,7 +357,7 @@ public class DatabaseAdapter {
         private Context context;
 
         private static final String DATABASE_NAME = "scan_N_loading.db";
-        private static final int VERSION_NUMBER = 3;
+        private static final int VERSION_NUMBER = 4;
 
         //Header Table:
         private static final String HEADERS_TABLE_NAME = "headers";
@@ -449,6 +464,18 @@ public class DatabaseAdapter {
                 + PickingTeam + " VARCHAR(255));";
         private static final String DROP_LINES_TABLE = "DROP TABLE IF EXISTS " + LINES_TABLE_NAME;
 
+        //Queue table:
+        private static final String QUEUE_TABLE_NAME = "Queue";
+        private static final String Type = "type";
+        private static final String Instructions = "instructions";
+
+        //Creating the table:
+        private static final String CREATE_QUEUE_TABLE = "CREATE TABLE " + QUEUE_TABLE_NAME
+                + " (" + UID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + Type + " VARCHAR(255),"
+                + Instructions + " VARCHAR(255));";
+        private static final String DROP_QUEUE_TABLE = "DROP TABLE IF EXISTS " + QUEUE_TABLE_NAME;
+
 
         public DatabaseHelper(@Nullable Context context) {
             super(context, DATABASE_NAME, null, VERSION_NUMBER);
@@ -461,6 +488,7 @@ public class DatabaseAdapter {
             try {
                 db.execSQL(CREATE_HEADERS_TABLE);
                 db.execSQL(CREATE_LINES_TABLE);
+                db.execSQL(CREATE_QUEUE_TABLE);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -472,6 +500,7 @@ public class DatabaseAdapter {
             try {
                 db.execSQL(DROP_HEADERS_TABLE);
                 db.execSQL(DROP_LINES_TABLE);
+                db.execSQL(DROP_QUEUE_TABLE);
                 onCreate(db);
             } catch (Exception e) {
                 e.printStackTrace();
