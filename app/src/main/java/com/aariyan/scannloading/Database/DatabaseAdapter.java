@@ -97,6 +97,7 @@ public class DatabaseAdapter {
         contentValues.put(DatabaseHelper.DATE, date);
         contentValues.put(DatabaseHelper.ROUTE_NAME, routeName);
         contentValues.put(DatabaseHelper.ORDER_TYPES, orderTypes);
+        contentValues.put(DatabaseHelper.FLAG, 0);
         contentValues.put(DatabaseHelper.userId, userId);
 
         long id = database.insert(DatabaseHelper.LINES_TABLE_NAME, null, contentValues);
@@ -205,6 +206,22 @@ public class DatabaseAdapter {
         return linesList;
 
     }
+
+    //Update Quantity of lines table, as well as changing the flag value using orderId & orderDetailsId:
+    public long updateLinesQuantity(int orderId, int orderDetailsId, int userId, int quantity, int flag) {
+        SQLiteDatabase database = helper.getWritableDatabase();
+        String selection = DatabaseHelper.OrderIds + " LIKE ? AND " + DatabaseHelper.OrderDetailId + " LIKE ? AND " + DatabaseHelper.UID + " LIKE ?";
+        String[] args = {"" + orderId, "" + orderDetailsId, "" + userId};
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DatabaseHelper.Qty, quantity);
+        contentValues.put(DatabaseHelper.FLAG, flag);
+
+        long ids = database.update(DatabaseHelper.LINES_TABLE_NAME, contentValues, selection, args);
+
+        return ids;
+    }
+
 
 //    //Getting all the user
 //    public List<UserListModel> getUserData() {
@@ -403,6 +420,7 @@ public class DatabaseAdapter {
         private static final String ScannedQty = "ScannedQty";
         private static final String isRandom = "isRandom";
         private static final String PickingTeam = "PickingTeam";
+        private static final String FLAG = "FLAG";
         //Creating the table:
         private static final String CREATE_LINES_TABLE = "CREATE TABLE " + LINES_TABLE_NAME
                 + " (" + UID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -427,6 +445,7 @@ public class DatabaseAdapter {
                 + ROUTE_NAME + " INTEGER,"
                 + ORDER_TYPES + " INTEGER,"
                 + userId + " INTEGER,"
+                + FLAG + " INTEGER,"
                 + PickingTeam + " VARCHAR(255));";
         private static final String DROP_LINES_TABLE = "DROP TABLE IF EXISTS " + LINES_TABLE_NAME;
 

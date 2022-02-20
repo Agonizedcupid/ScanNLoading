@@ -11,6 +11,8 @@ import androidx.constraintlayout.helper.widget.Layer;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.aariyan.scannloading.Activity.HeaderNLineActivity;
+import com.aariyan.scannloading.Constant.Constant;
+import com.aariyan.scannloading.Interface.QuantityUpdater;
 import com.aariyan.scannloading.Model.LinesModel;
 import com.aariyan.scannloading.R;
 
@@ -20,22 +22,34 @@ public class HeaderNLineAdapter extends RecyclerView.Adapter<HeaderNLineAdapter.
 
     private Context context;
     private List<LinesModel> list;
-    public HeaderNLineAdapter(Context context, List<LinesModel> list) {
+    private QuantityUpdater quantityUpdater;
+
+    public HeaderNLineAdapter(Context context, List<LinesModel> list, QuantityUpdater updater) {
         this.context = context;
         this.list = list;
+        this.quantityUpdater = updater;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.single_recycler_items,parent,false));
+        return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.single_recycler_items, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         LinesModel model = list.get(position);
         holder.storeName.setText(model.getPastelDescription());
-        holder.itemQuantity.setText(""+model.getQty());
+        holder.itemQuantity.setText("" + model.getQty());
+
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                quantityUpdater.onClick(model.getOrderId(), model.getOrderDetailId(), Constant.userId,
+                        model.getLoaded(), model.getQty(), Constant.getDate(), Constant.types[0], model.getPrice(), model.getPastelDescription());
+                return false;
+            }
+        });
     }
 
     @Override
@@ -45,7 +59,7 @@ public class HeaderNLineAdapter extends RecyclerView.Adapter<HeaderNLineAdapter.
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView storeName,itemQuantity;
+        private TextView storeName, itemQuantity;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
