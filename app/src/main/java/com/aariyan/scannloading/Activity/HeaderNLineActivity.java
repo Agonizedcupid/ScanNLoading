@@ -46,13 +46,14 @@ public class HeaderNLineActivity extends AppCompatActivity implements QuantityUp
     private RecyclerView greenRecycler, redRecyclerView, blackRecyclerView;
 
     private List<LinesModel> linesList = new ArrayList<>();
+    private List<LinesModel> barcodeLineList = new ArrayList<>();
     private DatabaseAdapter databaseAdapter;
 
     private View bottomSheet;
     private BottomSheetBehavior behavior;
     private ImageView closeBottomSheet;
     private EditText superVisorCode, quantityUpdate, comment;
-    private TextView itemNames, itemPrice;
+    private TextView itemNames, itemPrice, titleOne;
     private Button updateQuantityBtn, updateQuantityBtnByBarcode;
 
     //
@@ -120,6 +121,7 @@ public class HeaderNLineActivity extends AppCompatActivity implements QuantityUp
             }
         });
 
+        titleOne = findViewById(R.id.titleOne);
         superVisorCode = findViewById(R.id.supervisorCode);
         quantityUpdate = findViewById(R.id.quantityUpdate);
         comment = findViewById(R.id.comment);
@@ -153,9 +155,11 @@ public class HeaderNLineActivity extends AppCompatActivity implements QuantityUp
     private void getDataByBarCode() {
         updateQuantityBtnByBarcode.setVisibility(View.VISIBLE);
         updateQuantityBtn.setVisibility(View.GONE);
-        linesList.clear();
-        linesList = databaseAdapter.getLinesByDateRouteNameOrderTypes(orderId);
-        LinesModel model = filtering.getLineByBarcode(linesList, barcodeEditText.getText().toString());
+        titleOne.setVisibility(View.GONE);
+        superVisorCode.setVisibility(View.GONE);
+        barcodeLineList.clear();
+        barcodeLineList = databaseAdapter.getLinesByDateRouteNameOrderTypes(orderId);
+        LinesModel model = filtering.getLineByBarcode(barcodeLineList, barcodeEditText.getText().toString(),0);
         if (model != null) {
             behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             itemNames.setText(model.getPastelDescription());

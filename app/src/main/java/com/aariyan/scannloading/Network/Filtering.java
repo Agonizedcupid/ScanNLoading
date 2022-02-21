@@ -50,8 +50,9 @@ public class Filtering {
         return l;
     }
 
-    public LinesModel getLineByBarcode(List<LinesModel> models, String barcode) {
-        Observable observable = Observable.fromIterable(models).filter(model -> model.getBarCode() == barcode);
+    public LinesModel getLineByBarcode(List<LinesModel> models, String barcode, int flag) {
+        Observable observable = Observable.fromIterable(models)
+                .filter(model -> model.getBarCode().equals(barcode) && flag == 0);
         Observer observer = new Observer() {
             @Override
             public void onSubscribe(@NonNull Disposable d) {
