@@ -159,7 +159,7 @@ public class HeaderNLineActivity extends AppCompatActivity implements QuantityUp
         superVisorCode.setVisibility(View.GONE);
         barcodeLineList.clear();
         barcodeLineList = databaseAdapter.getLinesByDateRouteNameOrderTypes(orderId);
-        LinesModel model = filtering.getLineByBarcode(barcodeLineList, barcodeEditText.getText().toString(),0);
+        LinesModel model = filtering.getLineByBarcode(barcodeLineList, barcodeEditText.getText().toString(), 0);
         if (model != null) {
             behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             itemNames.setText(model.getPastelDescription());
@@ -167,6 +167,7 @@ public class HeaderNLineActivity extends AppCompatActivity implements QuantityUp
             itemPrice.setText(String.format("%s", model.getPrice()));
         } else {
             Snackbar.make(snackBarLayout, "No item found!", Snackbar.LENGTH_SHORT).show();
+            barcodeEditText.setText("");
         }
 
         updateQuantityBtnByBarcode.setOnClickListener(new View.OnClickListener() {
@@ -187,8 +188,9 @@ public class HeaderNLineActivity extends AppCompatActivity implements QuantityUp
 
                 //then insert data into Queue table to sync on server:
                 StringBuilder builder = new StringBuilder();
-                builder.append(orderId).append("|").append(model.getOrderDetailId()).append("|")
-                        .append(userId).append("|").append(model.getLoaded()).append("|").append(quantityUpdate.getText().toString())
+                builder.append(orderId).append("|").append(model.getOrderDetailId()).append("|").append(userId).append("|")
+                        .append(model.getLoaded()).append("|")
+                        .append(quantityUpdate.getText().toString())
                         .append("|").append(Constant.getDate()).append("|").append("0.0");
 
                 if (!Constant.isInternetConnected(HeaderNLineActivity.this)) {
@@ -253,36 +255,43 @@ public class HeaderNLineActivity extends AppCompatActivity implements QuantityUp
 
 
     @Override
-    public void onClick(int orderId, int orderDetailsId, int userId, int loaded, int quantity, String date, String type, double price, String itemName) {
+    public void onClick(int orderId, int orderDetailsId, int userId, int loaded, int quantity, String date, String type, double price, String itemName, int defaultFlag) {
         itemNames.setText(itemName);
-        quantityUpdate.setText("" + quantity, TextView.BufferType.EDITABLE);
+        quantityUpdate.setText(String.valueOf(quantity), TextView.BufferType.EDITABLE);
         itemPrice.setText(String.format("%s", price));
         behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        superVisorCode.setVisibility(View.VISIBLE);
+        titleOne.setVisibility(View.VISIBLE);
 
-        quantityUpdate.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        //Toast.makeText(this, ""+quantity, Toast.LENGTH_SHORT).show();
 
-            }
+//        quantityUpdate.addTextChangedListener(new TextWatcher() {
+//            @Override
+//            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+//
+//            }
+//
+//            @Override
+//            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+//                String val = charSequence.toString();
+//                if (!val.equals("")) {
+//                    int enteredQuantity = Integer.parseInt(val);
+//                    Toast.makeText(HeaderNLineActivity.this, ""+quantity, Toast.LENGTH_SHORT).show();
+//                    if (enteredQuantity > quantity) {
+//                        quantityUpdate.setError("Maximum quantity is " + quantity);
+//                        quantityUpdate.requestFocus();
+//                        return;
+//                    }
+//                }
+//
+//            }
+//
+//            @Override
+//            public void afterTextChanged(Editable editable) {
+//
+//            }
+//        });
 
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (!charSequence.toString().equals("")) {
-                    int enteredQuantity = Integer.parseInt(charSequence.toString());
-                    if (enteredQuantity > quantity) {
-                        quantityUpdate.setError("Maximum quantity is " + quantity);
-                        quantityUpdate.requestFocus();
-                        return;
-                    }
-                }
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-
-            }
-        });
 
         updateQuantityBtn.setVisibility(View.VISIBLE);
         updateQuantityBtnByBarcode.setVisibility(View.GONE);
@@ -290,15 +299,31 @@ public class HeaderNLineActivity extends AppCompatActivity implements QuantityUp
         updateQuantityBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                int enteredQuantity = Integer.parseInt(quantityUpdate.getText().toString());
+                if (enteredQuantity > quantity) {
+                    quantityUpdate.setError("Maximum quantity is " + quantity);
+                    quantityUpdate.requestFocus();
+                    return;
+                }
                 // First update the line table
-                int flag = 0;
+                int flag = 0, loaded = 0;
                 if (Integer.parseInt(quantityUpdate.getText().toString()) == quantity) {
                     flag = 1;
                 } else if (Integer.parseInt(quantityUpdate.getText().toString()) < quantity) {
                     flag = 2;
                 }
-                long ids = databaseAdapter.updateLinesQuantity(orderId, orderDetailsId,
-                        userId, Integer.parseInt(quantityUpdate.getText().toString()), flag);
+                long ids = 0;
+                if (defaultFlag == 1 || defaultFlag == 2) {
+                    ids = databaseAdapter.updateLinesQuantity(orderId, orderDetailsId,
+                            userId, Integer.parseInt(quantityUpdate.getText().toString()), 0);
+                    loaded = 0;
+                } else {
+                    ids = databaseAdapter.updateLinesQuantity(orderId, orderDetailsId,
+                            userId, Integer.parseInt(quantityUpdate.getText().toString()), flag);
+                    loaded = 1;
+                }
+
                 if (ids < 0) {
                     Toast.makeText(HeaderNLineActivity.this, "Unable to update Lines Table!", Toast.LENGTH_SHORT).show();
                 }
@@ -306,27 +331,37 @@ public class HeaderNLineActivity extends AppCompatActivity implements QuantityUp
                 //then insert data into Queue table to sync on server:
                 StringBuilder builder = new StringBuilder();
                 builder.append(orderId).append("|").append(orderDetailsId).append("|")
-                        .append(userId).append("|").append(loaded).append("|").append(quantityUpdate.getText().toString())
+                        .append(userId).append("|")
+                        .append(loaded).append("|")
+                        .append(quantityUpdate.getText().toString())
                         .append("|").append(Constant.getDate()).append("|").append("0.0");
 
-                if (!Constant.isInternetConnected(HeaderNLineActivity.this)) {
-                    //As there has no connection, we are saving data locally
-                    Snackbar.make(snackBarLayout, "No Stable Internet Connection!", Snackbar.LENGTH_SHORT).show();
-                    long checkInsert = databaseAdapter.insertQueue(Constant.types[0], builder.toString());
-                    Log.d(TAG, "" + builder);
-                    if (checkInsert > 0) {
-                        Snackbar.make(snackBarLayout, "Data stored locally!", Snackbar.LENGTH_SHORT).show();
-                        loadLinesFromSQLite();
-                    } else {
-                        Snackbar.make(snackBarLayout, "Unable to store data!", Snackbar.LENGTH_SHORT).show();
-                    }
-                } else {
-                    //If there has a connection then upload directly to the server:
-                    Snackbar.make(snackBarLayout, "You have stable internet connection!", Snackbar.LENGTH_SHORT).show();
-                    //So upload to the server directly
+                long checkInsert = databaseAdapter.insertQueue(Constant.types[0], builder.toString());
+                Log.d(TAG, "" + builder);
+                if (checkInsert > 0) {
+                    Snackbar.make(snackBarLayout, "Data stored locally!", Snackbar.LENGTH_SHORT).show();
                     loadLinesFromSQLite();
-                    Snackbar.make(snackBarLayout, "Posted to the server directly!", Snackbar.LENGTH_SHORT).show();
                 }
+
+//                if (!Constant.isInternetConnected(HeaderNLineActivity.this)) {
+//                    //As there has no connection, we are saving data locally
+//                    Snackbar.make(snackBarLayout, "No Stable Internet Connection!", Snackbar.LENGTH_SHORT).show();
+//                    long checkInsert = databaseAdapter.insertQueue(Constant.types[0], builder.toString());
+//                    Log.d(TAG, "" + builder);
+//                    if (checkInsert > 0) {
+//                        Snackbar.make(snackBarLayout, "Data stored locally!", Snackbar.LENGTH_SHORT).show();
+//                        loadLinesFromSQLite();
+//                    } else {
+//                        Snackbar.make(snackBarLayout, "Unable to store data!", Snackbar.LENGTH_SHORT).show();
+//                    }
+//                }
+//                else {
+//                    //If there has a connection then upload directly to the server:
+//                    Snackbar.make(snackBarLayout, "You have stable internet connection!", Snackbar.LENGTH_SHORT).show();
+//                    //So upload to the server directly
+//                    loadLinesFromSQLite();
+//                    Snackbar.make(snackBarLayout, "Posted to the server directly!", Snackbar.LENGTH_SHORT).show();
+//                }
                 behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
             }

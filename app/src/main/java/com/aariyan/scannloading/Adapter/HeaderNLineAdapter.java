@@ -46,7 +46,8 @@ public class HeaderNLineAdapter extends RecyclerView.Adapter<HeaderNLineAdapter.
             @Override
             public boolean onLongClick(View view) {
                 quantityUpdater.onClick(model.getOrderId(), model.getOrderDetailId(), Constant.userId,
-                        model.getLoaded(), model.getQty(), Constant.getDate(), Constant.types[0], model.getPrice(), model.getPastelDescription());
+                        model.getLoaded(), model.getQty(), Constant.getDate(), Constant.types[0],
+                        model.getPrice(), model.getPastelDescription(),model.getFlag());
                 return false;
             }
         });
